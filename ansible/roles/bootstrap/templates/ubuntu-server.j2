@@ -1,0 +1,12 @@
+default menu.c32
+prompt 0
+timeout 30
+ONTIMEOUT 1
+
+menu title ########## Ubuntu PXE Boot Menu ##########
+default install
+label install
+  kernel ubuntu-server/vmlinuz
+  INITRD ubuntu-server/initrd
+  APPEND root=/dev/ram0 ramdisk_size=1500000 ip=dhcp url=http://10.1.1.2/isos/ubuntu-server/{{ ubuntu_iso }}
+

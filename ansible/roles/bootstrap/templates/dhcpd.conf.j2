@@ -1,0 +1,19 @@
+option domain-name "moorelab.lan";
+
+allow bootp;
+allow booting;
+default-lease-time 600;
+max-lease-time 7200;
+
+# tell DHCP about the other subnet but don't configure a service on it
+subnet 10.0.0.0 netmask 255.255.255.0 {
+}
+
+# define range for dhcp auto assignment internally
+subnet 10.1.1.0 netmask 255.255.255.0 {
+  range 10.1.1.100 10.1.1.254;
+  option domain-name "moorelab.lan";
+  option domain-name-servers 10.1.1.2;
+  next-server 10.1.1.2;
+  filename "pxelinux.0"; # default PXE file
+}

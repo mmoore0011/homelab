@@ -1,0 +1,106 @@
+---
+- name: Set the service name
+  set_fact:
+    service_name: caddy
+
+- name: Ensure directories exists
+  file:
+    path: "{{ item }}"
+    state: directory
+  with_items:
+    - "/var/opt/container-data/caddy/config"
+    - "/var/opt/container-data/caddy/data"
+    - "/var/opt/container-data/caddy/src/isos/centos7-min"
+    - "/var/opt/container-data/caddy/src/isos/centos9"
+    - "/var/opt/container-data/caddy/src/isos/ubuntu-server"
+    - "/var/opt/container-data/caddy/src/kickstart"
+    - "/mnt/iso"
+
+- name: Write systemd unit for caddy
+  template:
+    src: "caddy.service.j2"
+    dest: /usr/lib/systemd/system/caddy.service
+  notify: 
+    - reload systemd
+    - restart service
+
+- name: Write caddy config
+  template:
+    src: Caddyfile.j2
+    dest: /var/opt/container-data/caddy/config/Caddyfile
+  notify: 
+    - restart service
+
+- name: Ensure caddy service is enabled
+  systemd:
+    name: "caddy"
+    enabled: yes
+
+- name: Start caddy service
+  systemd:
+    name: "caddy"
+    state: started
+
+- name: Mount CentOS7 ISO and copy contents if directory is empty
+  shell: |
+    mount -o loop /var/opt/isos/{{ centos7_iso }} /mnt/iso/
+    cp -rf /mnt/iso /var/opt/container-data/caddy/src/isos/centos7-min 
+    umount /mnt/iso
+  become: true
+
+- name: Mount CentOS9 ISO and copy contents if directory is empty
+  shell: |
+    mount -o loop /var/opt/isos/{{ centos9_iso }} /mnt/iso/
+    cp -rf /mnt/iso /var/opt/container-data/caddy/src/isos/centos9
+    umount /mnt/iso
+  become: true
+
+- name: Mount ubuntu ISO and copy contents if directory is empty
+  shell: |
+    mount -o loop /var/opt/isos/{{ ubuntu_iso }} /mnt/iso/
+    cp -rf /mnt/iso/casper/initrd /var/opt/container-data/caddy/src/isos/ubuntu-server/
+    cp -rf /mnt/iso/casper/vmlinuz /var/opt/container-data/caddy/src/isos/ubuntu-server/ 
+    umount /mnt/iso
+  become: true
+
+- name: Download signed shim binary for Ubuntu
+  shell: |
+    apt download shim-signed
+
+- name: Copy signed shim binary for Ubuntu
+  shell: |
+    dpkg-deb --fsys-tarfile shim-signed*deb | tar x ./usr/lib/shim/shimx64.efi.signed -O > /var/opt/container-data/caddy/src/isos/ubuntu-server/bootx64.efi
+    rm shim-signed*deb
+  become: true
+
+- name: Copy signed grub binary for Ubuntu
+  shell: |
+    apt download grub-efi-amd64-signed
+    dpkg-deb --fsys-tarfile grub-efi-amd64-signed*deb | tar x ./usr/lib/grub/x86_64-efi-signed/grubnetx64.efi.signed -O > /var/opt/container-data/caddy/src/isos/ubuntu-server/grubx64.efi
+  become: true
+
+- name: Copy grub font for Ubuntu
+  shell: |
+    apt download grub-common
+    dpkg-deb --fsys-tarfile grub-common*deb | tar x ./usr/share/grub/unicode.pf2 -O > /var/opt/container-data/caddy/src/isos/ubuntu-server/unicode.pf2
+  become: true
+
+- name: Put the ubuntu iso into the tftp dir
+  shell: |
+    cp /var/opt/isos/{{ ubuntu_iso }} /var/opt/container-data/caddy/src/isos/ubuntu-server
+  become: true
+
+- name: Place grub.cfg
+  template:
+    src: grub.cfg.j2
+    dest: /var/opt/container-data/caddy/src/isos/ubuntu-server/grub.cfg
+
+- name: Write CentOS7 kickstart file
+  template:
+    src: centos7-min.conf.j2
+    dest: /var/opt/container-data/caddy/src/kickstart/centos7-min.conf
+
+- name: Write CentOS9 kickstart file
+  template:
+    src: centos9.conf.j2
+    dest: /var/opt/container-data/caddy/src/kickstart/centos9.conf

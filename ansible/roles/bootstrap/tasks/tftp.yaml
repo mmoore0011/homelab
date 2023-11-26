@@ -1,0 +1,44 @@
+---
+- name: Set the service name
+  set_fact:
+    service_name: tftp
+
+- name: Ensure directories exists
+  file:
+    path: "{{ item }}"
+    state: directory
+  with_items:
+    - "/var/opt/container-data/tftp/pxelinux.cfg"
+
+- name: Write systemd unit for tftp
+  template:
+    src: "tftp.service.j2"
+    dest: /usr/lib/systemd/system/tftp.service
+  notify: 
+    - reload systemd
+    - restart service
+
+- name: Write the default PXE file
+  template:
+    src: default.j2
+    dest: /var/opt/container-data/tftp/pxelinux.cfg/default
+  notify: 
+    - restart service
+
+- name: Write the PXE file for each lab host
+  template:
+    src: "{{ hostvars[item].operating_system }}.j2"
+    dest: "/var/opt/container-data/tftp/pxelinux.cfg/01-{{ hostvars[item].mac_address }}"
+  loop: "{{ groups['labhosts'] }}"
+  notify: 
+    - restart service
+
+- name: Ensure tftp service is enabled
+  systemd:
+    name: "tftp"
+    enabled: yes
+
+- name: Start tftp service
+  systemd:
+    name: "tftp"
+    state: started

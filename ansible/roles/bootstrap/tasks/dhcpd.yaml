@@ -1,0 +1,35 @@
+---
+- name: Set the service name
+  set_fact:
+    service_name: dhcpd
+
+- name: Ensure config directory exists
+  file:
+    path: "/var/opt/container-data/dhcpd/data"
+    state: directory
+
+- name: Write systemd unit for dhcpd
+  template:
+    src: "dhcpd.service.j2"
+    dest: /usr/lib/systemd/system/dhcpd.service
+  notify: 
+    - reload systemd
+    - restart service
+
+- name: Write dhcpd config
+  template:
+    src: dhcpd.conf.j2
+    dest: /var/opt/container-data/dhcpd/data/dhcpd.conf
+  notify: 
+    - restart service
+
+- name: Ensure dhcpd service is enabled
+  systemd:
+    name: "dhcpd"
+    enabled: yes
+
+- name: Start dhcpd service
+  systemd:
+    name: "dhcpd"
+    state: started
+  

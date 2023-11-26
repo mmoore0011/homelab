@@ -1,0 +1,9 @@
+---
+- name: DHCPD
+  include_tasks: dhcpd.yaml
+
+- name: PXE web server
+  include_tasks: caddy.yaml
+
+- name: TFTP
+  include_tasks: tftp.yaml

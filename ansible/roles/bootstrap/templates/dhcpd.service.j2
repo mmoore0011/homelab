@@ -1,0 +1,11 @@
+[Unit]
+Description=DHCPD (containerized)
+After=docker.service
+
+[Service]
+ExecStart=/usr/bin/docker run --name dhcpd --rm --net host -v /var/opt/container-data/dhcpd/data:/data networkboot/dhcpd {{ lab_interface }}
+ExecStop=/usr/bin/docker stop dhcpd
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,23 @@
+[Unit]
+Description=tftp
+After=docker.service
+Requires=docker.service
+
+[Service]
+ExecStartPre=/usr/sbin/modprobe nf_conntrack_tftp
+ExecStartPre=/usr/sbin/modprobe nf_nat_tftp
+ExecStartPre=/bin/bash -c '/usr/bin/docker inspect %N &> /dev/null && /usr/bin/docker rm %N || :'
+ExecStart=/usr/bin/docker run \
+  --name %N \
+  -v /var/opt/container-data/tftp/pxelinux.cfg/:/tftpboot/pxelinux.cfg:ro \
+  -v /var/opt/container-data/caddy/src/isos/centos7-min/iso/images/pxeboot:/tftpboot/centos7-min \
+  -v /var/opt/container-data/caddy/src/isos/centos9/iso/images/pxeboot:/tftpboot/centos9 \
+  -v /var/opt/container-data/caddy/src/isos/ubuntu-server:/tftpboot/ubuntu-server \
+  -p 69:69/udp \
+  jumanjiman/tftp-hpa
+ExecStop=/usr/bin/docker stop %N
+RestartSec=5s
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

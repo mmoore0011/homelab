@@ -1,0 +1,20 @@
+[Unit]
+Description=caddy
+After=docker.service
+Requires=docker.service
+
+[Service]
+ExecStartPre=/bin/bash -c '/usr/bin/docker inspect %N &> /dev/null && /usr/bin/docker rm %N || :'
+ExecStart=/usr/bin/docker run \
+  --name %N \
+  -v /var/opt/container-data/caddy/config/Caddyfile:/etc/caddy/Caddyfile:ro \
+  -v /var/opt/container-data/caddy/data:/data \
+  -v /var/opt/container-data/caddy/src:/usr/share/caddy \
+  -p 80:80 \
+  caddy
+ExecStop=/usr/bin/docker stop %N
+RestartSec=5s
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

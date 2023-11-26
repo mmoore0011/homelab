@@ -1,0 +1,60 @@
+# System authorization information
+auth --enableshadow --passalgo=sha512
+# Use CDROM installation media
+cdrom
+# Use non-graphical install
+text
+# reboot after install
+eula --agreed
+# Run the Setup Agent on first boot
+firstboot --enable
+# Keyboard layouts
+keyboard --vckeymap=us --xlayouts='us'
+# System language
+lang en_US.UTF-8
+
+# Network information
+network  --bootproto=dhcp --device=enp0s3 --onboot=off --ipv6=auto --no-activate
+network  --hostname=localhost.localdomain
+
+# Root password (password)
+rootpw --iscrypted $1$eju0eUM6$7V3/Z441C4gHMOouf6dsR/
+# System services
+services --enabled="chronyd"
+# System timezone
+timezone America/Chicago
+# (password)
+user --groups=wheel --name=mike --password=$1$eju0eUM6$7V3/Z441C4gHMOouf6dsR/ --iscrypted --gecos="mike"
+# System bootloader configuration
+bootloader --append=" crashkernel=auto" --location=mbr --boot-drive=sda
+autopart --type=lvm
+# Partition clearing information
+clearpart --all --drives=sda --initlabel
+# Disable firewall
+firewall --disabled
+# Disable selinux
+selinux --disabled
+
+# another thing needed to reboot after install
+reboot
+
+%packages
+@^minimal
+@core
+
+chrony
+kexec-tools
+
+%end
+
+%addon com_redhat_kdump --enable --reserve-mb='auto'
+
+%end
+
+%anaconda
+pwpolicy root --minlen=6 --minquality=1 --notstrict --nochanges --notempty
+pwpolicy user --minlen=6 --minquality=1 --notstrict --nochanges --emptyok
+pwpolicy luks --minlen=6 --minquality=1 --notstrict --nochanges --notempty
+
+%end
+

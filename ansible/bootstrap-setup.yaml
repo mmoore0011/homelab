@@ -1,0 +1,9 @@
+---
+- hosts: bootstrap
+  handlers:
+    - include: roles/global_handlers/main.yaml
+  gather_facts: no
+  become: yes
+  connection: local
+  roles:
+    - bootstrap 

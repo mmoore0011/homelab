@@ -1,0 +1,5 @@
+# The name of the interface connected to the lab network
+lab_interface: "enp0s25"
+centos7_iso: "CentOS-7-x86_64-Minimal-2009.iso"
+ubuntu_iso: "ubuntu-22.04.3-live-server-amd64.iso"
+centos9_iso: "CentOS-Stream-9-latest-x86_64-boot.iso"
